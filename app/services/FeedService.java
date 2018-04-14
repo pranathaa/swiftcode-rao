@@ -1,5 +1,6 @@
 package services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import data.FeedResponse;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -12,4 +13,22 @@ import java.util.concurrent.ExecutionException;
 
 public class FeedService {
 
+    public FeedResponse getFeedByQuery(String query) {
+        FeedResponse feedResponse = new FeedResponse();
+        try {
+            WSRequest feedRequest = WS.url("https://news.google.com/news?q=cats&output=rss");
+            CompletionStage<WSResponse> responsePromise=feedRequest
+                    .setQueryParameter("q","query")
+                    .setQueryParameter("output","rss")
+                    .get();
+            Document response=responsePromise.thenApply(WSResponse::asXml).toCompletableFuture().get();
+            Node item = response.getFirstChild().getFirstChild().getChildNodes().item(10);
+            feedResponse.title=item.getChildNodes().item(0).getFirstChild().getNodeValue();
+            feedResponse.pubDate=item.getChildNodes().item(3).getFirstChild().getNodeValue();
+            feedResponse.description=item.getChildNodes().item(4).getFirstChild().getNodeValue();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return feedResponse;
+    }
 }
