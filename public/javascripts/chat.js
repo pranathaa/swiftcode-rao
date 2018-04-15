@@ -4,27 +4,22 @@ app.config(function ($mdThemingProvider) {
         .primaryPalette('blue')
         .accentPalette('light-blue');
 });
-app.controller('chatController', function ($scope) {
-    $scope.messages = [
-        {
-            'sender': 'USER',
-            'text': 'hello'
-    },
-        {
-            'sender': 'BOT',
-            'text': 'Hi what can i do for u'
-    },
-        {
-            'sender': 'USER',
-            'text': 'Help me in my peoject'
-    },
-        {
-            'sender': 'BOT',
-            'text': 'What the topic'
-    },
-        {
-            'sender': 'USER',
-            'text': 'Its about IoT'
-    }
-    ];
+app.controller('chatController', function ($scope, $sce) {
+    $scope.messages = [];
+    $scope.trust = $sce.trustAsHtml;
+    var exampleScoket = new WebSocket('ws://localhost:9000/chatSocket');
+    exampleScoket.onmessage = function (event) {
+        var jsonData = JSON.parse(event.data);
+        jsonData.time = new Date()
+            .toLocaleTimeString();
+        $scope.messages.push(jsonData);
+
+        $scope.$apply();
+        console.log(jsonData);
+
+    };
+    $scope.sendMessage = function () {
+        exampleScoket.send($scope.userMessage);
+        $scope.userMessage = '';
+    };
 });
